@@ -1,5 +1,6 @@
 import unittest
 import helpers
+EXPECTED_MOVES = 1968
 
 all_moves = helpers.all_possible_moves()
 
@@ -32,5 +33,4 @@ class TestHelpers(unittest.TestCase):
     self.assertFalse(knight_move_illegal)
 
   def test_all_possible_moves(self):
-    EXPECTED_MOVES = 1968
     self.assertEqual(len(all_moves), EXPECTED_MOVES)

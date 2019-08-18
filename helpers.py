@@ -1,4 +1,5 @@
 from itertools import product
+EXPECTED_MOVES = 1968
 
 ranks = range(8)
 columns = range(8)
