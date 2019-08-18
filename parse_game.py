@@ -14,7 +14,9 @@ State = namedtuple('state', ['fen', 'move', 'time', 'ev'], verbose=True)
 Comment = namedtuple('comment', ['ev', 'time'], verbose=True)
 
 def split_pgn(pgn: str):
-  return [pgn]
+  return re.compile("\[Event .*\]").split(pgn)[1:]
+
+
 
 
 def pgn_file_to_array(pgn_file: str):
@@ -36,11 +38,14 @@ def parse_game(pgn):
   line = game.mainline()
 
   states = []
-  for x in line:
-    fen = x.board().fen()
-    move = x.move
-    comment = parse_comment(x.comment)
-    states.append(State(fen, move, comment.time, comment.ev))
+  try:
+    for x in line:
+      fen = x.board().fen()
+      move = x.move
+      comment = parse_comment(x.comment)
+      states.append(State(fen, move, comment.time, comment.ev))
+  except ValueError:
+    return []
 
   return states
 
@@ -58,6 +63,8 @@ def extract(name: str, comment: str):
 
 def format_eval(part: str):
   if not part:
+    return None
+  if '#' in part:
     return None
   return int(float(part) * 100)
 
@@ -111,7 +118,6 @@ def fen_to_castle_vector(fen):
 def ep_string_to_position(ep_string: str):
   if ep_string == '-':
     return (0, 0, 0)
-  print(ep_string)
   ep_col = helpers.colnames.index(ep_string[0])
   ep_row = int(ep_string[1])
   return (1, ep_col, ep_row)
@@ -126,7 +132,7 @@ def fen_to_enpassant_vector(fen):
   return vals
 
 def fen_to_color_vector(fen):
-  vals_array = np.array([1 * (fen == 'w')])
+  vals_array = np.array([1 * (fen != 'w')])
   zeros = np.zeros((NUM_COLUMNS, NUM_COLUMNS, NUM_COLOR_STATES))
   return zeros + vals_array
 

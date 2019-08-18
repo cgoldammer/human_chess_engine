@@ -34,7 +34,7 @@ class TestParse(unittest.TestCase):
 STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
 position_rook_white = parse.PIECES.index('r')
-position_rook_black = parse.PIECES.index('r') + parse.NUM_PIECES
+position_rook_black = position_rook_white + parse.NUM_PIECES
 
 class TestVectorize(unittest.TestCase):
   def test_fen_to_vector(self): 

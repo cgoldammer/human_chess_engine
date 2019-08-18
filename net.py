@@ -14,9 +14,16 @@ class Net(object):
   def __init__(self):
     model = models.Sequential()
     input_shape = parse.NUM_COLUMNS, parse.NUM_COLUMNS, parse.NUM_DIMENSIONS
+
     model.add(layers.Conv2D(num_layers, (3, 3), activation='relu', input_shape=input_shape))
+    model.add(layers.BatchNormalization(axis=-1))
+    model.add(layers.Activation('relu'))
+
+    model.add(layers.Conv2D(num_layers, (3, 3), activation='relu', input_shape=input_shape))
+    model.add(layers.BatchNormalization(axis=-1))
+    model.add(layers.Activation('relu'))
+
     model.add(layers.Flatten())
-    model.add(layers.Dense(10, activation='relu'))
     model.add(layers.Dense(helpers.EXPECTED_MOVES, activation='softmax'))
 
     model.compile(optimizer='adam',
@@ -26,9 +33,9 @@ class Net(object):
     self.model = model
     self.input_shape = input_shape
 
-  def fit(self, x, y, restart=True):
+  def fit(self, x, y, params, restart=True):
     model = self.model
-    model.fit(x, y, epochs=1)
+    model.fit(x, y, **params)
     self.model = model
     return model
 
