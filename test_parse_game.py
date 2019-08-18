@@ -63,7 +63,37 @@ class TestVectorize(unittest.TestCase):
     self.assertEqual(list(v[0][0]), [0, 0, 0, 0])
 
 
-# [(fen, move, time, ev)] -> predictive model for move:
-# move = f(fen, time, stats_players)
-# To do it practically, I split out fen into 8x8xZ 
-# then add layers for (time, player_stat)
+class TestToFen(unittest.TestCase):
+
+  def test_castle_vector_to_fen(self):
+    fen = 'KQkq'
+    castle_vector = parse.fen_to_castle_vector(fen)
+    fen_back = parse.castle_vector_to_fen(castle_vector)
+    self.assertEqual(fen, fen_back)
+
+  def test_ep_vector_to_fen(self):
+    fen = 'e3'
+    ep_vector = parse.fen_to_ep_vector(fen)
+    fen_back = parse.ep_vector_to_fen(ep_vector)
+    self.assertEqual(fen, fen_back)
+
+    fen = '-'
+    ep_vector = parse.fen_to_ep_vector(fen)
+    fen_back = parse.ep_vector_to_fen(ep_vector)
+    self.assertEqual(fen, fen_back)
+
+  def test_piece_vector_to_fen(self):
+    fen = 'rnbqk2r/ppppp1bp/5np1/5p2/2PP4/5NP1/PP2PPBP/RNBQK2R'
+    piece_vector = parse.fen_to_piece_vector(fen)
+    fen_back = parse.piece_vector_to_fen(piece_vector)
+    self.assertEqual(fen, fen_back)
+
+  def test_fen_vector_to_fen(self):
+    fens = [
+        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+    ]
+
+    for fen in fens:
+      fen_vector = parse.fen_to_vector(fen)
+      fen_back = parse.vector_to_fen(fen_vector)
+      self.assertEqual(fen, fen_back)
