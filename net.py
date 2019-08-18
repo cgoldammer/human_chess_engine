@@ -7,7 +7,7 @@ import tensorflow as tf
 import helpers
 from tensorflow.keras import datasets, layers, models
 
-num_layers = 10
+num_layers = 20
 
 # Model: Input -> [Conv2D() -> BatchNorm -> Activation] -> Flatten -> Output
 class Net(object):
@@ -19,7 +19,7 @@ class Net(object):
     model.add(layers.BatchNormalization(axis=-1))
     model.add(layers.Activation('relu'))
 
-    model.add(layers.Conv2D(num_layers, (3, 3), activation='relu', input_shape=input_shape))
+    model.add(layers.Conv2D(num_layers * 2, (3, 3), activation='relu'))
     model.add(layers.BatchNormalization(axis=-1))
     model.add(layers.Activation('relu'))
 
