@@ -97,3 +97,20 @@ class TestToFen(unittest.TestCase):
       fen_vector = parse.fen_to_vector(fen)
       fen_back = parse.vector_to_fen(fen_vector)
       self.assertEqual(fen, fen_back)
+
+fen_white = 'rnbqkb1r/pppp1ppp/4pn2/8/1PP5/2N5/P2PPPPP/R1BQKBNR b KQkq - 2 3'
+fen_invert_pos = 'r1bqkbnr/p2ppppp/2n5/1pp5/8/4PN2/PPPP1PPP/RNBQKB1R b kqKQ - 2 3'
+
+class TestInvert(unittest.TestCase):
+  def test_invert_move(self):
+    uci = 'd3d6'
+    expected = 'd6d3'
+    self.assertEqual(parse.invert_move(uci), expected)
+
+    uci = 'd7d8N'
+    expected = 'd2d1N'
+    self.assertEqual(parse.invert_move(uci), expected)
+
+  def test_invert_fen(self):
+    self.assertEqual(parse.invert_fen(fen_white), fen_invert_pos)
+
