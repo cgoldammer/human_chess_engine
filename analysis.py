@@ -4,17 +4,18 @@ import net as net_module
 import pandas as pd
 import helpers
 import imp
+from sys import getsizeof
 
 POS_COLOR = (2 * p.NUM_PIECES)
 
 pgn = open('data/test/many_games.pgn').read()
 
 char_per_move = 31
-num_moves_thousand = 50
+num_moves_thousand = 500
 
 %time x, y = p.pgn_file_to_array(pgn[0: num_moves_thousand * char_per_move * 1000])
 x.shape
-
+getsizeof(x) / 10**6
 
 num_initial = x.shape[0]
 num_initial
@@ -37,9 +38,10 @@ y_train = y_rand[ix]
 x_test = x_rand[~ix]
 y_test = y_rand[~ix]
 
+x_train.shape
 
 params_net = {
-  'num_layers': 1,
+  'num_layers': 5,
   'layers_multiplier': 1,
   'conv_size': 3
 }
@@ -47,12 +49,12 @@ net = net_module.Net(params_net)
 net.model.summary()
 
 params_fit = {
-  'epochs': 20,
+  'epochs': 2,
   'validation_data': (x_test, y_test),
   'batch_size': 1000,
   'verbose': 1
 }
-net.fit(x_train, y_train, params_fit)
+%time net.fit(x_train, y_train, params_fit)
 
 
 y_hat = net.predict(x_test)
