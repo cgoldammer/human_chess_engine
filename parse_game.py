@@ -120,14 +120,14 @@ NUM_ALL_PIECES = len(ALL_PIECES)
 NUM_TIME_DIMENSIONS = 3
 NUM_RATING_DIMENSIONS = 2
 
-fen_components = ['position', 'color', 'castle', 'ep', 'half_move']
+fen_components = ['position', 'color', 'castle', 'ep'] #, 'half_move']
 
 components = {
   'position': NUM_ALL_PIECES,
   'color': NUM_COLOR_STATES,
   'castle': NUM_CASTLE_STATES,
   'ep': NUM_EP_STATES,
-  'half_move': NUM_HALFMOVE_STATES,
+  #'half_move': NUM_HALFMOVE_STATES,
   'time': NUM_TIME_DIMENSIONS,
   'rating': NUM_RATING_DIMENSIONS
 }
@@ -213,7 +213,7 @@ def fen_to_vector(fen):
   color_vector = fen_to_color_vector(fen_color)
   half_move_vector = fen_to_half_move_vector(*fen_half_move)
 
-  return np.concatenate((piece_vector, color_vector, castle_vector, ep_vector, half_move_vector), axis=2)
+  return np.concatenate((piece_vector, color_vector, castle_vector, ep_vector), axis=2)
 
 
 TIME_STANDARDIZER = 1000
@@ -328,6 +328,7 @@ def invert_state(state):
 
   return state_new
 
+
 def standardize_state(state):
   is_white = 'w' in state.fen
   return state if is_white else invert_state(state)
@@ -364,7 +365,7 @@ def piece_vector_to_fen(piece_vector):
 
 
 def color_vector_to_fen(color_vector):
-  is_white = color_vector[0][0] = 1
+  is_white = color_vector[0][0][0] == 1
   return 'w' if is_white else 'b'
 
 def castle_vector_to_fen(castle_vector):
@@ -400,8 +401,14 @@ def vector_to_fen(vec):
   fen_color = color_vector_to_fen(get_by_range(vec, positions['color']))
   fen_castle = castle_vector_to_fen(get_by_range(vec, positions['castle']))
   fen_ep = ep_vector_to_fen(get_by_range(vec, positions['ep']))
-  fen_half_move = half_move_vector_to_fen(get_by_range(vec, positions['half_move']))
+
+  # fen_half_move = half_move_vector_to_fen(get_by_range(vec, positions['half_move']))
+  fen_half_move = "0 1"
   fen = "%s %s %s %s %s" % (fen_piece, fen_color, fen_castle, fen_ep, fen_half_move)
+
+  is_white = fen_color = 'w'
+  if not is_white:
+    fen = invert_fen(fen)
 
   return fen
 

@@ -7,19 +7,32 @@ import tensorflow as tf
 import helpers
 from tensorflow.keras import datasets, layers, models
 
-num_layers = 20
+num_layers_default = 20
+layers_multiplier_default = 2
+conv_size_default = 3
+
 
 # Model: Input -> [Conv2D() -> BatchNorm -> Activation] -> Flatten -> Output
 class Net(object):
-  def __init__(self):
+  def __init__(self, params=None):
+
+    if params:
+      num_layers = params.get('num_layers', num_layers_default)
+      layers_multiplier = params.get('layers_multiplier', layers_multiplier_default)
+      conv_size = params.get('conv_size', conv_size_default)
+
     model = models.Sequential()
     input_shape = parse.NUM_COLUMNS, parse.NUM_COLUMNS, parse.NUM_DIMENSIONS
 
-    model.add(layers.Conv2D(num_layers, (3, 3), activation='relu', input_shape=input_shape))
+    model.add(layers.Conv2D(num_layers, (conv_size, conv_size), activation='relu', padding='same', input_shape=input_shape))
     model.add(layers.BatchNormalization(axis=-1))
     model.add(layers.Activation('relu'))
 
-    model.add(layers.Conv2D(num_layers * 2, (3, 3), activation='relu'))
+    model.add(layers.Conv2D(num_layers * layers_multiplier, (conv_size, conv_size), padding='same', activation='relu'))
+    model.add(layers.BatchNormalization(axis=-1))
+    model.add(layers.Activation('relu'))
+
+    model.add(layers.Conv2D(num_layers * layers_multiplier, (conv_size, conv_size), padding='same', activation='relu'))
     model.add(layers.BatchNormalization(axis=-1))
     model.add(layers.Activation('relu'))
 
@@ -33,7 +46,10 @@ class Net(object):
     self.model = model
     self.input_shape = input_shape
 
-  def fit(self, x, y, params, restart=True):
+  def fit(self, x, y, params=None, restart=True):
+    if not params:
+      params = {}
+
     model = self.model
     model.fit(x, y, **params)
     self.model = model

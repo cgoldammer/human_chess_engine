@@ -3,16 +3,18 @@ import parse_game as p
 import net as net_module
 import pandas as pd
 import helpers
+import imp
 
 POS_COLOR = (2 * p.NUM_PIECES)
 
 pgn = open('data/test/many_games.pgn').read()
 
 char_per_move = 31
-num_moves_thousand = 5000
+num_moves_thousand = 50
 
 %time x, y = p.pgn_file_to_array(pgn[0: num_moves_thousand * char_per_move * 1000])
 x.shape
+
 
 num_initial = x.shape[0]
 num_initial
@@ -35,16 +37,22 @@ y_train = y_rand[ix]
 x_test = x_rand[~ix]
 y_test = y_rand[~ix]
 
-net = net_module.Net()
+
+params_net = {
+  'num_layers': 1,
+  'layers_multiplier': 1,
+  'conv_size': 3
+}
+net = net_module.Net(params_net)
 net.model.summary()
 
-params = {
+params_fit = {
   'epochs': 20,
   'validation_data': (x_test, y_test),
   'batch_size': 1000,
   'verbose': 1
 }
-net.fit(x_train, y_train, params)
+net.fit(x_train, y_train, params_fit)
 
 
 y_hat = net.predict(x_test)
