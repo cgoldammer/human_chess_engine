@@ -10,6 +10,7 @@ from tensorflow.keras import datasets, layers, models
 num_layers_default = 20
 layers_multiplier_default = 2
 conv_size_default = 3
+num_nets_default = 2
 
 
 # Model: Input -> [Conv2D() -> BatchNorm -> Activation] -> Flatten -> Output
@@ -20,6 +21,7 @@ class Net(object):
       num_layers = params.get('num_layers', num_layers_default)
       layers_multiplier = params.get('layers_multiplier', layers_multiplier_default)
       conv_size = params.get('conv_size', conv_size_default)
+      num_nets = params.get('num_nets', num_nets_default)
 
     model = models.Sequential()
     input_shape = parse.NUM_COLUMNS, parse.NUM_COLUMNS, parse.NUM_DIMENSIONS
@@ -28,13 +30,11 @@ class Net(object):
     model.add(layers.BatchNormalization(axis=-1))
     model.add(layers.Activation('relu'))
 
-    model.add(layers.Conv2D(num_layers * layers_multiplier, (conv_size, conv_size), padding='same', activation='relu'))
-    model.add(layers.BatchNormalization(axis=-1))
-    model.add(layers.Activation('relu'))
+    for i in range(num_nets):
 
-    model.add(layers.Conv2D(num_layers * layers_multiplier, (conv_size, conv_size), padding='same', activation='relu'))
-    model.add(layers.BatchNormalization(axis=-1))
-    model.add(layers.Activation('relu'))
+        model.add(layers.Conv2D(num_layers * layers_multiplier, (conv_size, conv_size), padding='same', activation='relu'))
+        model.add(layers.BatchNormalization(axis=-1))
+        model.add(layers.Activation('relu'))
 
     model.add(layers.Flatten())
     model.add(layers.Dense(helpers.EXPECTED_MOVES, activation='softmax'))

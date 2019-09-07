@@ -5,15 +5,39 @@ import pandas as pd
 import helpers
 import imp
 from sys import getsizeof
+import tensorflow as tf
+tf.test.is_gpu_available()
 
 POS_COLOR = (2 * p.NUM_PIECES)
 
 pgn = open('data/test/many_games.pgn').read()
 
 char_per_move = 31
-num_moves_thousand = 500
+num_moves_thousand = 200
+num_bytes = num_moves_thousand * char_per_move * 1000
+num_bytes / 10 ** 6
+len(pgn) / 10 ** 6
 
-%time x, y = p.pgn_file_to_array(pgn[0: num_moves_thousand * char_per_move * 1000])
+# %time x, y = p.pgn_file_to_array(pgn[0: num_bytes])
+
+i = 54
+char_start = num_bytes * i
+while char_start < len(pgn):
+  char_end = char_start + num_bytes
+  print("Loop %s: From %s to %s out of" % (i, char_start / 10 ** 6, char_end / 10 ** 6), len(pgn)/10**6)
+  x, y = p.pgn_file_to_array(pgn[char_start: char_end])
+  np.savez_compressed('data/arrays/arrays%03d.npz' % i, x=x, y=y)
+  i = i + 1
+  char_start = char_end
+
+
+
+
+np.savez_compressed('data/arrays/arrays.npz', x=x, y=y)
+loaded = np.load('data/arrays/arrays.npz')
+x = loaded['x']
+y = loaded['y']
+
 x.shape
 getsizeof(x) / 10**6
 
@@ -41,23 +65,65 @@ y_test = y_rand[~ix]
 x_train.shape
 
 params_net = {
-  'num_layers': 5,
-  'layers_multiplier': 1,
-  'conv_size': 3
+  'num_layers': 80,
+  'layers_multiplier': 2,
+  'conv_size': 3,
+  'num_nets': 6,
 }
 net = net_module.Net(params_net)
 net.model.summary()
 
+model = net.model
+
+num_files = 71
+filename = 'data/arrays/arrays000.npz'
+loaded = np.load(filename)
+x_val, y_val = loaded['x'], loaded['y']
+
+
+# File 0 is used for validation
+def generate_arrays(num_batch=100):
+  i = 1
+  while True:
+    if i > 1:
+      filename = 'data/arrays/arrays%03d.npz' % i
+      loaded = np.load(filename)
+      print('Loading file: %s' %i)
+      x, y = loaded['x'], loaded['y']
+      n = x.shape[0]
+      random_ix = np.random.choice(n, n, replace=False)
+      x_rand = x[random_ix, :]
+      y_rand = y[random_ix, :]
+
+      pos = 0
+      while pos < n:
+        pos_end = pos + num_batch
+        yield (x[pos:pos_end, :, : ,:], y[pos:pos_end, :])
+        pos = pos_end
+
+    i = (i + 1) % num_files 
+
+model.fit_generator(generate_arrays(1000), steps_per_epoch=1000,
+        epochs=100, verbose=1, validation_data=(x_val, y_val))
+
+
 params_fit = {
-  'epochs': 2,
+  'epochs': 40,
   'validation_data': (x_test, y_test),
   'batch_size': 1000,
   'verbose': 1
 }
 %time net.fit(x_train, y_train, params_fit)
 
+n = len(x_val)
+random_ix = np.random.choice(n, 1000, replace=False)
+x_test = x_val[random_ix, :]
+y_test = y_val[random_ix, :]
 
-y_hat = net.predict(x_test)
+x_test.shape
+
+
+y_hat = model.predict(x_test)
 df = pd.DataFrame(y_test)
 df.columns = ['y']
 df['y_hat'] = y_hat.argmax(axis=1)
@@ -72,27 +138,26 @@ df['move_hat'] = [all_moves[i] for i in df.y_hat]
 df['fen'] = [p.vector_to_fen(v) for v in x_test]
 df['rating_white'] = [p.vector_to_rating(v)[0] for v in x_test]
 df['rating_black'] = [p.vector_to_rating(v)[1] for v in x_test]
+df['is_white'] = ['w' in f for f in df.fen]
 
 pd.set_option('display.max_colwidth', 100)
-df[['fen', 'rating_white', 'rating_black', 'move', 'move_hat', 'y_hat_prob', 'match']].sample(20)
+
+
+df.query('is_white and y_hat_prob > 0.80')[['fen', 'rating_white', 'rating_black', 'move', 'move_hat', 'y_hat_prob', 'match']].head(50).sort_values('y_hat_prob')
 
 df[['match', 'match_naive']].mean()
 
 
 fen = '8/8/2kp4/4p3/8/8/8/2K5 w - -'
-
 fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-
 fen = 'rn1qkbnr/pp2pppp/2p5/5b2/3PN3/8/PPP2PPP/R1BQKBNR w KQkq - 1 5'
-
 fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-rating = 2500
 
 
 def get_probs(fen, rating):
   state = p.StateFull(fen=fen, move=None, time=10, ev=None, rating_white=rating, rating_black=rating, total_time=300, increment=5)
   x = p.state_to_vector(state)
-  d = pd.DataFrame(net.predict(x.reshape((1, 8, 8, p.NUM_DIMENSIONS)))[0]) * 100
+  d = pd.DataFrame(model.predict(x.reshape((1, 8, 8, p.NUM_DIMENSIONS)))[0]) * 100
   d.columns = ['prob']
   d['rating'] = rating
   d['fen'] = fen
@@ -101,8 +166,15 @@ def get_probs(fen, rating):
   return d
 
 ratings = np.arange(500, 4500, 500)
+fen_najdorf = 'rnbqkb1r/5ppp/p2ppn2/6B1/1p2P3/2NB1N2/PPP2PPP/R2QK2R w KQkq - 0 9'
+fen_grab_pawn = 'r2qk2r/pp2bppp/2bppn2/6B1/3QP3/2N2N2/PPP2PPP/2KR3R w kq - 2 10' # Bb5 sicilian- should I take pawn?
+fen_taking_is_bad = '2k5/ppp4p/6p1/4b3/8/4B2P/PPP3P1/2K5 w - - 0 1'
+fen_sacrifice = 'r1b2rk1/1p3pp1/p1nR3p/4n2q/1PB1NQ1B/8/6PP/5RK1 w - - 6 23'
+fen = fen_grab_pawn
+fen = fen_sacrifice
+fen = fen_najdorf
+fen = fen_taking_is_bad
 
-fen = 'rnbqkb1r/5ppp/p2ppn2/6B1/1p2P3/2NB1N2/PPP2PPP/R2QK2R w KQkq - 0 9'
 dfs = pd.concat([get_probs(fen, rating) for rating in ratings])
 probs = dfs.reset_index().groupby(['move', 'rating']).prob.mean().unstack(1).sort_values(2000, ascending=False)
 probs.head(10)
