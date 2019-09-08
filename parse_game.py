@@ -24,9 +24,12 @@ def split_pgn(pgn: str):
 def pgn_file_to_array(pgn_file: str):
   arrays = [state_to_data(state) for state in parse_pgn_file(pgn_file)]
   list_xs = [array[0] for array in arrays]
-  xs = np.stack(list_xs, axis=0)
-  ys = np.stack([array[1] for array in arrays], axis=0)
-  return xs, ys
+  try:
+      xs = np.stack(list_xs, axis=0)
+      ys = np.stack([array[1] for array in arrays], axis=0)
+      return xs, ys
+  except ValueError:
+      return None, None
 
 
 def parse_time_control(time_control_string: str):

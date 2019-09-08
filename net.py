@@ -26,13 +26,14 @@ class Net(object):
     model = models.Sequential()
     input_shape = parse.NUM_COLUMNS, parse.NUM_COLUMNS, parse.NUM_DIMENSIONS
 
-    model.add(layers.Conv2D(num_layers, (conv_size, conv_size), activation='relu', padding='same', input_shape=input_shape))
+    conv_shape = conv_size, conv_size
+
+    model.add(layers.Conv2D(num_layers, conv_shape, activation='relu', padding='same', input_shape=input_shape))
     model.add(layers.BatchNormalization(axis=-1))
     model.add(layers.Activation('relu'))
 
     for i in range(num_nets):
-
-        model.add(layers.Conv2D(num_layers * layers_multiplier, (conv_size, conv_size), padding='same', activation='relu'))
+        model.add(layers.Conv2D(num_layers * layers_multiplier, conv_shape, padding='same', activation='relu'))
         model.add(layers.BatchNormalization(axis=-1))
         model.add(layers.Activation('relu'))
 

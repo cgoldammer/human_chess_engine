@@ -6,37 +6,31 @@ import helpers
 import imp
 from sys import getsizeof
 import tensorflow as tf
-tf.test.is_gpu_available()
+import cProfile
+import pstats
+
+assert tf.test.is_gpu_available()
 
 POS_COLOR = (2 * p.NUM_PIECES)
 
 pgn = open('data/test/many_games.pgn').read()
 
-char_per_move = 31
-num_moves_thousand = 200
-num_bytes = num_moves_thousand * char_per_move * 1000
-num_bytes / 10 ** 6
-len(pgn) / 10 ** 6
 
-# %time x, y = p.pgn_file_to_array(pgn[0: num_bytes])
+def r():
+  _ = p.pgn_file_to_array(pgn[0: 100000])
+cProfile.run('r()', 'restats')
 
-i = 54
-char_start = num_bytes * i
-while char_start < len(pgn):
-  char_end = char_start + num_bytes
-  print("Loop %s: From %s to %s out of" % (i, char_start / 10 ** 6, char_end / 10 ** 6), len(pgn)/10**6)
-  x, y = p.pgn_file_to_array(pgn[char_start: char_end])
-  np.savez_compressed('data/arrays/arrays%03d.npz' % i, x=x, y=y)
-  i = i + 1
-  char_start = char_end
+p = pstats.Stats('restats')
+p.strip_dirs().sort_stats(-1).print_stats()
+p.print_stats(10)
+p.sort_stats('time').print_stats(30)
 
-
-
-
-np.savez_compressed('data/arrays/arrays.npz', x=x, y=y)
-loaded = np.load('data/arrays/arrays.npz')
+loaded = np.load('data/arrays/arrays%03d.npz' % 1)
 x = loaded['x']
 y = loaded['y']
+
+x.shape
+(x[0:10, :] > 0).mean()
 
 x.shape
 getsizeof(x) / 10**6
@@ -64,18 +58,7 @@ y_test = y_rand[~ix]
 
 x_train.shape
 
-params_net = {
-  'num_layers': 80,
-  'layers_multiplier': 2,
-  'conv_size': 3,
-  'num_nets': 6,
-}
-net = net_module.Net(params_net)
-net.model.summary()
-
-model = net.model
-
-num_files = 71
+num_files = 184
 filename = 'data/arrays/arrays000.npz'
 loaded = np.load(filename)
 x_val, y_val = loaded['x'], loaded['y']
@@ -88,7 +71,7 @@ def generate_arrays(num_batch=100):
     if i > 1:
       filename = 'data/arrays/arrays%03d.npz' % i
       loaded = np.load(filename)
-      print('Loading file: %s' %i)
+      print('\nLoading file: %s' %i)
       x, y = loaded['x'], loaded['y']
       n = x.shape[0]
       random_ix = np.random.choice(n, n, replace=False)
@@ -103,17 +86,22 @@ def generate_arrays(num_batch=100):
 
     i = (i + 1) % num_files 
 
-model.fit_generator(generate_arrays(1000), steps_per_epoch=1000,
+params_net = {
+  'num_layers': 80,
+  'layers_multiplier': 2,
+  'conv_size': 3,
+  'num_nets': 6,
+}
+net = net_module.Net(params_net)
+net.model.summary()
+
+model = net.model
+
+model.fit_generator(generate_arrays(1000), steps_per_epoch=100,
         epochs=100, verbose=1, validation_data=(x_val, y_val))
 
+model.save('human.h5')
 
-params_fit = {
-  'epochs': 40,
-  'validation_data': (x_test, y_test),
-  'batch_size': 1000,
-  'verbose': 1
-}
-%time net.fit(x_train, y_train, params_fit)
 
 n = len(x_val)
 random_ix = np.random.choice(n, 1000, replace=False)
