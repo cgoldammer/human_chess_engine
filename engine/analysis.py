@@ -1,13 +1,14 @@
 import numpy as np
-import parse_game as p
-import net as net_module
 import pandas as pd
-import helpers
 import imp
 from sys import getsizeof
 import tensorflow as tf
 import cProfile
 import pstats
+
+import engine.helpers as helpers
+import engine.parse_game as p
+import engine.net as net_module
 
 assert tf.test.is_gpu_available()
 
@@ -30,10 +31,6 @@ x = loaded['x']
 y = loaded['y']
 
 x.shape
-(x[0:10, :] > 0).mean()
-
-x.shape
-getsizeof(x) / 10**6
 
 num_initial = x.shape[0]
 num_initial
@@ -42,10 +39,6 @@ random_ix = np.random.choice(num_initial, num_initial, replace=False)
 x_rand = x[random_ix, :]
 y_rand = y[random_ix, :]
 assert x_rand.shape == x.shape
-
-# ix = x_rand[:, 0, 0, POS_COLOR] == 1
-# x_rand = x_rand[ix]
-# y_rand = y_rand[ix]
 
 n = x_rand.shape[0]
 share_train = 0.95
@@ -98,9 +91,18 @@ net.model.summary()
 model = net.model
 
 model.fit_generator(generate_arrays(1000), steps_per_epoch=100,
-        epochs=100, verbose=1, validation_data=(x_val, y_val))
+        epochs=500, verbose=1, validation_data=(x_val, y_val))
+
+
 
 model.save('human.h5')
+
+!pip3 install boto3
+
+import boto3
+s3 = boto3.client('s3')
+with open('human.h5', 'rb') as f:
+  s3.upload_fileobj(f, 'humanchess', 'moves.h5')
 
 
 n = len(x_val)

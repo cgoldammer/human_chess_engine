@@ -1,11 +1,12 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-import parse_game as parse
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 
 import tensorflow as tf
-import helpers
 from tensorflow.keras import datasets, layers, models
+
+import engine.parse_game as parse
+import engine.helpers as helpers
 
 num_layers_default = 20
 layers_multiplier_default = 2

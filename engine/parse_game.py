@@ -2,9 +2,9 @@ from collections import namedtuple
 import re
 import chess.pgn
 import io
-import helpers
 import numpy as np
 import itertools
+import engine.helpers as helpers
 
 
 def time_to_sec(time_str):
