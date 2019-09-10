@@ -9,9 +9,10 @@ import engine.parse_game as parse
 import engine.helpers as helpers
 
 num_layers_default = 20
-layers_multiplier_default = 2
+layers_multiplier_default = 1
 conv_size_default = 3
 num_nets_default = 2
+flatten_default = False
 
 
 # Model: Input -> [Conv2D() -> BatchNorm -> Activation] -> Flatten -> Output
@@ -23,22 +24,32 @@ class Net(object):
       layers_multiplier = params.get('layers_multiplier', layers_multiplier_default)
       conv_size = params.get('conv_size', conv_size_default)
       num_nets = params.get('num_nets', num_nets_default)
+      flatten = params.get('flatten', flatten_default)
 
     model = models.Sequential()
     input_shape = parse.NUM_COLUMNS, parse.NUM_COLUMNS, parse.NUM_DIMENSIONS
 
-    conv_shape = conv_size, conv_size
+    if not flatten:
 
-    model.add(layers.Conv2D(num_layers, conv_shape, activation='relu', padding='same', input_shape=input_shape))
-    model.add(layers.BatchNormalization(axis=-1))
-    model.add(layers.Activation('relu'))
+      conv_shape = conv_size, conv_size
+      model.add(layers.Conv2D(num_layers, conv_shape, activation='relu', padding='same', input_shape=input_shape))
+      model.add(layers.BatchNormalization(axis=-1))
+      model.add(layers.Activation('relu'))
 
-    for i in range(num_nets):
-        model.add(layers.Conv2D(num_layers * layers_multiplier, conv_shape, padding='same', activation='relu'))
-        model.add(layers.BatchNormalization(axis=-1))
-        model.add(layers.Activation('relu'))
+      for i in range(num_nets):
+          model.add(layers.Conv2D(num_layers * layers_multiplier, conv_shape, padding='same', activation='relu'))
+          model.add(layers.BatchNormalization(axis=-1))
+          model.add(layers.Activation('relu'))
 
-    model.add(layers.Flatten())
+      model.add(layers.MaxPool2D(pool_size=(2, 2)))
+
+      model.add(layers.Flatten())
+
+    else:
+      model.add(layers.Flatten(input_shape=input_shape))
+
+    model.add(layers.Dense(helpers.EXPECTED_MOVES, activation='relu'))
+    model.add(layers.Dense(helpers.EXPECTED_MOVES, activation='relu'))
     model.add(layers.Dense(helpers.EXPECTED_MOVES, activation='softmax'))
 
     model.compile(optimizer='adam',
