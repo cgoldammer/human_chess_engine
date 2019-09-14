@@ -10,6 +10,9 @@ import engine.helpers as helpers
 import engine.parse_game as p
 import engine.net as net_module
 
+import boto3
+s3 = boto3.client('s3')
+
 assert tf.test.is_gpu_available()
 
 POS_COLOR = (2 * p.NUM_PIECES)
@@ -80,27 +83,22 @@ def generate_arrays(num_batch=100):
     i = (i + 1) % num_files 
 
 params_net = {
-  'num_layers': 80,
-  'layers_multiplier': 2,
+  'num_layers': 300,
+  'layers_multiplier': 1,
   'conv_size': 3,
-  'num_nets': 6,
+  'num_nets': 10,
 }
+imp.reload(net_module)
 net = net_module.Net(params_net)
 net.model.summary()
 
 model = net.model
-
 model.fit_generator(generate_arrays(1000), steps_per_epoch=100,
-        epochs=500, verbose=1, validation_data=(x_val, y_val))
+        epochs=2000, verbose=1, validation_data=(x_val, y_val))
 
 
 
 model.save('human.h5')
-
-!pip3 install boto3
-
-import boto3
-s3 = boto3.client('s3')
 with open('human.h5', 'rb') as f:
   s3.upload_fileobj(f, 'humanchess', 'moves.h5')
 

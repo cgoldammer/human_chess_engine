@@ -1,29 +1,28 @@
-
-import numpy as np
-import parse_game as p
-import net as net_module
-import pandas as pd
-import helpers
-import imp
-from sys import getsizeof
-import tensorflow as tf
-tf.test.is_gpu_available()
-
+import datetime
 import multiprocessing
-pgn = open('data/test/many_games.pgn').read()
+
+from engine import parse_game as p
+from engine import net as net_module
+from engine import helpers
+
+
+print("Loading file")
+pgn = open('data/lichess/lichess_db_standard_rated_2017-04.pgn').read()
+print("Loading done")
 
 char_per_move = 31
 num_moves_thousand = 200
 num_bytes = num_moves_thousand * char_per_move * 1000
-NUM_CORES = 2
+NUM_CORES = 7
 
-loop_start = 10
+loop_start = 185
 loop_end = 500
 
 
 def calc(i):
   filename = 'data/arrays/arrays%03d.npz' % i
-  print('Starting %s' % i)
+  date = datetime.datetime.now()
+  print('Starting %s at %s' % (i, date))
   char_start = num_bytes * i
   char_end = char_start + num_bytes
   if char_end <= len(pgn):

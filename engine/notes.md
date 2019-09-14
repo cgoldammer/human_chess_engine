@@ -1,15 +1,19 @@
 
+# Testing
+`nosetests -v test_parse_game.py 2>&1 | grep -v "tensorflow" | grep -v "np_"`
+
 # Generating the data:
-
 ## Download
-
+```
 mkdir -p data/lichess
 wget https://database.lichess.org/standard/lichess_db_standard_rated_2017-04.pgn.bz2
 bzip2 -d lichess_db_standard_rated_2017-04.pgn.bz2
 
-`cat ~/Downloads/lichess_db_standard_rated_2017-04.pgn | head -1000000 | grep -v "\[Site" > data/test/many_games.pgn`
-`nosetests -v test_parse_game.py 2>&1 | grep -v "tensorflow" | grep -v "np_"`
+cat ~/Downloads/lichess_db_standard_rated_2017-04.pgn | head -1000000 | grep -v "\[Site" > data/test/many_games.pgn
+```
 
+## Splitting into chunks
+`cd ~/human_chess_engine; PYTHONPATH=. python3 -m engine.paral`
 
 # Speed:
 
