@@ -27,14 +27,4 @@ cat ~/Downloads/lichess_db_standard_rated_2017-04.pgn | head -1000000 | grep -v 
 
 # Todo:
 
-- Checks: 
-  - Am I inverting correctly if it's black to move?
-    - Fen
-    - Ratings
-    - EP
-- Scale time into 0-1 format
-- Parallelize the data creation. Maybe I can just do that on the fly?
-
-
-- better understand memory usage
-- better understand cpu usage
+- Checks: Time is scaled into 0-1 format
