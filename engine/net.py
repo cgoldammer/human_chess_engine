@@ -42,14 +42,17 @@ class Net(object):
           model.add(layers.Activation('relu'))
 
       model.add(layers.MaxPool2D(pool_size=(2, 2)))
-
       model.add(layers.Conv2D(num_layers * layers_multiplier, conv_shape, padding='same', activation='relu'))
       model.add(layers.BatchNormalization(axis=-1))
       model.add(layers.Activation('relu'))
 
       model.add(layers.MaxPool2D(pool_size=(2, 2)))
-
       model.add(layers.Conv2D(num_layers * layers_multiplier**2, conv_shape, padding='same', activation='relu'))
+      model.add(layers.BatchNormalization(axis=-1))
+      model.add(layers.Activation('relu'))
+
+      model.add(layers.MaxPool2D(pool_size=(2, 2)))
+      model.add(layers.Conv2D(num_layers * layers_multiplier**3, conv_shape, padding='same', activation='relu'))
       model.add(layers.BatchNormalization(axis=-1))
       model.add(layers.Activation('relu'))
 
@@ -58,6 +61,8 @@ class Net(object):
     else:
       model.add(layers.Flatten(input_shape=input_shape))
 
+    model.add(layers.Dense(helpers.EXPECTED_MOVES, activation='relu'))
+    model.add(layers.Dropout(0.5))
     model.add(layers.Dense(helpers.EXPECTED_MOVES, activation='relu'))
     model.add(layers.Dropout(0.5))
     model.add(layers.Dense(helpers.EXPECTED_MOVES, activation='softmax'))
