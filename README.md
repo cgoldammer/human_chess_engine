@@ -14,7 +14,7 @@ Input: All lichess games from 2017-04 (11M games, 25 GB pgn)
 Output: Move prediction for all possible 1968 moves.
 
 - Input: (Fen + Game data) 
-- Encode as (8,8,8,23)
+- Encode as (8,8,23)
 - 200 layers
 - 5 blocks of [Conv2D, BatchNorm, Activation]
 - Flatten
