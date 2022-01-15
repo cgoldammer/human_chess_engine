@@ -39,7 +39,7 @@ def parse_time_control(time_control_string: str):
     increment = int(split[1])
   except ValueError:
     return None
-  return (total_time, increment)
+  return (total_time / TIME_STANDARDIZER, increment / TIME_STANDARDIZER)
 
 
 def parse_pgn_file(pgn_file):
@@ -86,7 +86,7 @@ def parse_game(pgn):
   return states
 
 def parse_comment(comment: str):
-  part_time = extract('clk', comment)
+  part_time = extract('clk', comment) / TIME_STANDARDIZER
   part_eval = extract('eval', comment)
   return Comment(format_eval(part_eval), format_time(part_time))
 

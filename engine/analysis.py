@@ -5,6 +5,8 @@ from sys import getsizeof
 import tensorflow as tf
 import cProfile
 import pstats
+import datetime
+from tensorflow import keras
 
 import engine.helpers as helpers
 import engine.parse_game as p
@@ -17,22 +19,9 @@ assert tf.test.is_gpu_available()
 
 POS_COLOR = (2 * p.NUM_PIECES)
 
-pgn = open('data/test/many_games.pgn').read()
-
-
-def r():
-  _ = p.pgn_file_to_array(pgn[0: 100000])
-cProfile.run('r()', 'restats')
-
-p = pstats.Stats('restats')
-p.strip_dirs().sort_stats(-1).print_stats()
-p.print_stats(10)
-p.sort_stats('time').print_stats(30)
-
 loaded = np.load('data/arrays/arrays%03d.npz' % 1)
 x = loaded['x']
 y = loaded['y']
-
 x.shape
 
 num_initial = x.shape[0]
@@ -54,20 +43,19 @@ y_test = y_rand[~ix]
 
 x_train.shape
 
-num_files = 184
+num_files = 480
 filename = 'data/arrays/arrays000.npz'
 loaded = np.load(filename)
 x_val, y_val = loaded['x'], loaded['y']
 
 
 # File 0 is used for validation
-def generate_arrays(num_batch=100):
-  i = 1
+def generate_arrays(num_batch=100, i=1):
   while True:
     if i > 1:
       filename = 'data/arrays/arrays%03d.npz' % i
       loaded = np.load(filename)
-      print('\nLoading file: %s' %i)
+      print('\nLoading file: %s at %s' % (i, datetime.datetime.now()))
       x, y = loaded['x'], loaded['y']
       n = x.shape[0]
       random_ix = np.random.choice(n, n, replace=False)
@@ -82,20 +70,23 @@ def generate_arrays(num_batch=100):
 
     i = (i + 1) % num_files 
 
+
 params_net = {
-  'num_layers': 300,
+  'num_layers': 600,
   'layers_multiplier': 1,
   'conv_size': 3,
-  'num_nets': 10,
+  'num_nets': 5,
 }
 imp.reload(net_module)
 net = net_module.Net(params_net)
 net.model.summary()
 
 model = net.model
-model.fit_generator(generate_arrays(1000), steps_per_epoch=100,
-        epochs=2000, verbose=1, validation_data=(x_val, y_val))
+#model = keras.models.load_model('human.h5')
 
+print(datetime.datetime.now())
+model.fit_generator(generate_arrays(200, 301), steps_per_epoch=5000,
+        epochs=1000, verbose=1, validation_data=(x_val, y_val))
 
 
 model.save('human.h5')
