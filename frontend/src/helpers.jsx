@@ -1,4 +1,7 @@
 
+
+import Chess from 'chess.js';
+
 const eloScale = 3000;
 
 export const startingFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -92,8 +95,14 @@ export const getUrl = (fen, elo_white, elo_black, totalTime, timeLeft) => {
 }
 
 export async function getPrediction(fen, elo, isWhite, totalTime, timeLeft) {
+  if (DEV){
+    var chess = new Chess(fen);
+    var moves = chess.moves();
+    //var moves = ['d2d4', 'a2a4', 'b1c3'];
+    return await moves.map(m => [m, 1/moves.length]);
+  }
   const url = getUrl(fen, elo, isWhite, totalTime, timeLeft);
-  const response = await fetch(url);
+  const response = await fetch(url, {mode:'no-cors'});
   const data = await response.json();
   return data;
 }

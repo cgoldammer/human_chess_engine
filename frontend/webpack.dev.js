@@ -3,14 +3,17 @@ const webpack = require('webpack');
 const common = require('./webpack.common.js');
 
 const features = {
-  'SHOWUSERS': JSON.stringify(true)
-, 'BACKENDURL': JSON.stringify('snap_dev')
+  'DEV': JSON.stringify(true)
 }
 
 devExports = {
   mode: 'development',
   devtool: "eval-source-map",
-  output: { path: __dirname, filename: 'lib/bundle.js'},
+  output: {
+    path: __dirname,
+    publicPath: '/lib/',
+    filename: 'bundle.js'
+  },
   devServer: {
     contentBase: './lib',
     hot: true,

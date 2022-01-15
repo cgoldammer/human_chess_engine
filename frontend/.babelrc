@@ -1,11 +1,11 @@
 {
   "presets": [
-    "env",
     "react",
-    "stage-0",
-    "es2015"
+    "es2015",
+    "env",
+    "stage-1",
   ],
-	"plugins": [
+  "plugins": [
     ["transform-runtime", {
       "polyfill": false,
       "regenerator": true

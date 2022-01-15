@@ -2,10 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { DropdownItem, Dropdown, Jumbotron, Alert, HelpBlock, Label, Form, FormGroup, ControlLabel, ToggleButtonGroup, ToggleButton, ButtonGroup, Panel, ListGroup, ListGroupItem, Navbar, Nav, NavItem, NavDropdown, Button, DropdownButton, MenuItem, FormControl, Breadcrumb, Modal, Grid, Row, Col } from 'react-bootstrap';
 import Select from 'react-select'
+import Chess from 'chess.js';
 
 import { AppNavbar } from './AppNavbar.jsx';
 import { List } from 'immutable';
 import { Board, MoveTable } from './ChessApp.jsx';
+import { WithMoveValidation } from './ChessApp2.jsx';
 
 import { getAllFeatures, getPrediction } from './helpers.jsx';
 
@@ -29,14 +31,17 @@ const fens = {
 const OUTCOME_LOSS = 0;
 const OUTCOME_BLUNDER = 1;
 
+const start = crazyMiddleGame;
+
 var startingState = () => {
   var state = {
     elo: 2000,
-    fen: crazyMiddleGame,
     calculating: true,
     probs: [],
     totalTime: 300,
     timeLeft: 200,
+    numMovesShown: 4,
+    fen: start
   };
   
   return state;
@@ -65,11 +70,6 @@ export class ColorPicker extends React.Component {
 }
 
 export class FenSelector extends React.Component {
-  constructor(props){
-    super(props);
-    this.state = startingState();
-  }
-
   keyShow = key => {
     return (
       <MenuItem key={key} onClick={ () => this.props.setFen(fens[key]) }> { key }  </MenuItem>
@@ -108,12 +108,28 @@ export class FenSelector extends React.Component {
 
 }
 
-const showProb = moveProb => {
+
+const moveStyle = {
+  fontSize: '100%',
+  background: 'transparent',
+  border: '2px solid #0099CC',
+  borderRadius: '5px',
+  marginTop: '5px',
+  cursor: 'pointer',
+  textAlign: 'center',
+};
+
+        // <Button onClick={ () => makeMove(move)} style={moveStyle}>
+        //   {move}: {prob}%
+        // </Button>
+const showProb = makeMove => moveProb => {
+  const move = moveProb[0];
+  const prob = (100 * moveProb[1]).toFixed(0);
   return (
-    <div class="text-center" key={moveProb[0]}> 
-      <span style={{fontSize:'20px'}}>
-        {moveProb[0]} : { (100 * moveProb[1]).toFixed(0) }%
-      </span>
+    <div className="text-center" key={moveProb[0]}> 
+      <Col xs={3}>
+        <span style={{'fontSize': '125%'}}> {move}: {prob}% </span>
+      </Col>
     </div>)
 }
 
@@ -124,9 +140,9 @@ export class ShowProbs extends React.Component {
 
   render = () => {
     return (
-      <div>
-        {this.props.probs.slice(0, 5).map(showProb)}
-      </div>
+      <Row style={{'marginTop': '20px'}}>
+        {this.props.probs.slice(0, this.props.numMovesShown).map(showProb(this.props.makeMove))}
+      </Row>
     )
   }
 }
@@ -142,13 +158,24 @@ export class App extends React.Component {
     this.setState({ elo: elo });
   };
   onChange = e => this.setFen(e.target.value)
-  setFen = fen => this.setState({ fen: fen }, () => this.calculateScore())
+  getFen = () => this.state.fen;
+  setFen = (fen) => {
+    this.setState({fen: fen}, () => this.calculateScore());
+  }
+  makeMove = move => {
+    var logic = new Chess(this.getFen());
+    logic.move(move, {sloppy: true});
+    const fen = logic.fen();
+    console.log("Setting to: " + fen);
+    this.setFen(fen);
+    //this.setFen('rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR b KQkq - 0 1');
+  }
   setProbs = probs => this.setState({probs: probs});
   setTotalTime = totalTime => this.setState({totalTime: totalTime});
   setTimeLeft = timeLeft => this.setState({timeLeft: timeLeft});
   async calculateScore () {
     this.setState({'calculating': true});
-    const fen = this.state.fen;
+    const fen = this.getFen();
     const isWhite = this.state.isWhite;
     const elo = this.state.elo;
     const totalTime = this.state.totalTime;
@@ -156,7 +183,6 @@ export class App extends React.Component {
     const pred = await getPrediction(fen, elo, elo, totalTime, timeLeft);
     const outcome = this.state.outcome;
     this.setProbs(pred);
-    console.log(pred);
     this.setState({'calculating': false});
   }
   componentDidMount = () => {
@@ -169,38 +195,21 @@ export class App extends React.Component {
         <AppNavbar/>
         <Grid fluid={true}>
           <Col sm={6} smOffset={3}>
-            <Board fen={ this.state.fen }/>
-            <ShowProbs probs={this.state.probs}/>
-            <FenSelector fen={this.state.fen} onChange={this.onChange} setFen={this.setFen}/>
+            <Alert>Warning: This is a toy algorithm! Click on the board to play the moves!</Alert>
+            <WithMoveValidation fen={this.getFen()} setFen={this.setFen}/>
+            <ShowProbs probs={this.state.probs} numMovesShown={this.state.numMovesShown} makeMove={this.makeMove}/>
+            <FenSelector fen={this.getFen()} onChange={this.onChange} setFen={this.setFen}/>
             <Row>
             </Row>
             <Row>
               <Form horizontal>
                 <FormGroup>
-                  <Col componentClass={ControlLabel} xs={2}>Elo</Col>
+                  <Col componentClass={ControlLabel} xs={4}>Lichess Rating</Col>
                   <Col xs={7}>
-                    <Slider min={500} max={2800} value={ this.state.elo } onChange={this.setElo} onAfterChange={ () => this.calculateScore() }/>
+                    <Slider min={500} max={2200} value={ this.state.elo } onChange={this.setElo} onAfterChange={ () => this.calculateScore() }/>
                   </Col>
                   <Col style={{fontSize:'20px'}} xs={3}>
                     { this.state.elo }
-                  </Col>
-                </FormGroup>
-                <FormGroup>
-                  <Col componentClass={ControlLabel} xs={2}>Total Time</Col>
-                  <Col xs={7}>
-                    <Slider min={60} max={1000} value={ this.state.totalTime } onChange={this.setTotalTime} onAfterChange={ () => this.calculateScore() }/>
-                  </Col>
-                  <Col style={{fontSize:'20px'}} xs={3}>
-                    { this.state.totalTime }
-                  </Col>
-                </FormGroup>
-                <FormGroup>
-                  <Col componentClass={ControlLabel} xs={2}>Time Left</Col>
-                  <Col xs={7}>
-                    <Slider min={0} max={this.state.totalTime} value={ this.state.timeLeft } onChange={this.setTimeLeft} onAfterChange={ () => this.calculateScore() }/>
-                  </Col>
-                  <Col style={{fontSize:'20px'}} xs={3}>
-                    { this.state.timeLeft }
                   </Col>
                 </FormGroup>
               </Form>

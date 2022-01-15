@@ -32,11 +32,9 @@ export class AppNavbar extends React.Component {
             <Modal.Title>About</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <p>This tells you how likely a human chess position is to make a mistake 
-            and how many centipawns (CP) they are expected to lose.
-            </p>
-            <p>This is based on data collected from <a target='_blank' href='https://chessinsights.org'>Chess Insights</a>.</p>
-            <p>See the methodology and other fun results, for instance the sharpest games in the 2018 candidates tournament, <a target='_blank' href='https://github.com/cgoldammer/chess-analysis/blob/master/position_sharpness.ipynb'>here</a>!</p>
+            <p>This tells you what a human would play in a position.  </p>
+            <p>This is based on Lichess data. We use a neural network
+            to predict the moves that humans have played</p>
             <p>For more about me, check out <a target='_blank' href='https://www.chrisgoldammer.com'>my homepage</a>!</p>
             <p>If you have feedback or ideas, just send me an <a href='mailto:goldammer.christian@gmail.com'>email</a>!</p>
           </Modal.Body>
